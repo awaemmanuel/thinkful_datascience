@@ -1,11 +1,13 @@
 # Import modules needed to work with SQLite, pandas
-import sqlite3 as lite, pandas as pd
-db_name = 'getting_started.db'
-
+import sqlite3 as lite, pandas as pd, sys, os, time, itertools
 
 '''
     Solution to Unit 1 Lesson 3 on Databases using SQLite, pysqlite and pandas
     Will need to add dynamic inputs using sys.argv and reading input options from stdin later.
+
+    USAGE:
+    $ python 1.3.3_database.py
+    $ Please enter DB name: getting_started.db
 '''
 
 def database_challenge_solution(db_name):
@@ -75,5 +77,42 @@ def print_output(df):
         else:
             print "{}, {}".format(row['city'], row['state'])
 
+'''
+    Process user input
+'''
+def get_dbname():
+    file_dir = os.path.dirname(os.path.realpath(__file__))
+    prompt = "Please enter DB name: "
+           
+    while True:
+        db_name = raw_input(prompt)
+        if  os.path.isfile(file_dir + '/' + db_name):
+                print "Thank you!!"
+                print "Going to be accessing ==> {} ".format(file_dir + '/' + db_name)
+                return db_name.strip()
+        else:
+            print "Db does not exist in current working directory"
+            prompt = "Please check DB name and re-enter: "
+
+'''
+    Terminal spinning cursor simulator
+'''
+def spinning_cursor():
+    spinner = itertools.cycle(['-', '/', '|', '\\'])
+    for _ in range(50):
+        sys.stdout.write(spinner.next())
+        sys.stdout.flush()
+        time.sleep(0.3)
+        sys.stdout.write('\b')
+        
+
 if __name__ == '__main__':
+    # Get DB name from user
+    db_name = get_dbname()
+
+    # Simulate spining cursor
+    spinning_cursor()
+
+    # Solution
+    print "=" * 100
     database_challenge_solution(db_name)
