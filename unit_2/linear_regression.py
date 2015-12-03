@@ -1,4 +1,6 @@
 import pandas as pd
+import numpy as np
+import statsmodels.api as sm
 import re
 import matplotlib.pyplot as plt
 
@@ -57,3 +59,49 @@ plt.clf()
 a = pd.scatter_matrix(loansData, alpha=0.05, figsize=(10,10), diagonal='hist')
 plt.savefig('data_loan_scatter_matrix_2.png')
 plt.clf()
+
+
+######### LINEAR REGRESSION ####################
+
+# Retrieve our relent data columns
+interest_rate = loansData['Interest.Rate']
+loan_amts = loansData['Amount.Requested']
+fico_scores = loansData['FICO.Score']
+monthly_income = loansData['Monthly.Income']
+
+
+'''
+    Convert data points to matrix. Then transpose data from a DataFrame Series to columns.
+'''
+
+# Dependent Variable
+y = np.matrix(interest_rate).transpose()
+
+
+# Independent Variables. Just for curiosity, I've added the Monthly Income to show a correlation
+# with interest rate as well. Our C.I is still 95% and our p-values are still 0, meaning it's very 
+# significant to consider the Monthly Income in our model
+x1 = np.matrix(fico_scores).transpose()
+x2 = np.matrix(loan_amts).transpose()
+x3 = np.matrix(monthly_income).transpose()
+
+
+# Stack the columns of independent variables to create input matrix
+x = np.column_stack([x1, x2, x3])
+
+# Create our model
+X = sm.add_constant(x)
+model = sm.OLS(y, X)
+f = model.fit()
+
+
+# Output results
+print f.summary()
+
+# Warnings to clarify:
+# [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+# [2] The condition number is large, 3.19e+05. This might indicate that there are strong multicollinearity or other numerical problems.
+
+
+
+
