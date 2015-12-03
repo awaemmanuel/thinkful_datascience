@@ -45,15 +45,15 @@ loansData['FICO.Score'] = pd.Series(map(convert_fico_range_to_score, loansData['
 # Plot figures
 plt.figure()
 loansData['FICO.Score'].hist()
-plt.show()
+plt.savefig('fico_score_hist.png')
 plt.clf() # Clear old plot
 
 # Default scatter matrix plot
 a = pd.scatter_matrix(loansData, alpha=0.05, figsize=(10,10))
-plt.show()
+plt.savefig('data_loan_scatter_matrix_1.png')
 plt.clf()
 
 # Scatter matrix plot with histogram of data plots in the diagonal
 a = pd.scatter_matrix(loansData, alpha=0.05, figsize=(10,10), diagonal='hist')
-plt.show()
+plt.savefig('data_loan_scatter_matrix_2.png')
 plt.clf()
