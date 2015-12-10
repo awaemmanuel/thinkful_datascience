@@ -63,7 +63,7 @@ plt.clf()
 
 ######### LINEAR REGRESSION ####################
 
-# Retrieve our relent data columns
+# Retrieve our relevant data columns
 interest_rate = loansData['Interest.Rate']
 loan_amts = loansData['Amount.Requested']
 fico_scores = loansData['FICO.Score']
@@ -87,7 +87,7 @@ x3 = np.matrix(monthly_income).transpose()
 
 
 # Stack the columns of independent variables to create input matrix
-x = np.column_stack([x1, x2, x3])
+x = np.column_stack([x1, x2])
 
 # Create our model
 X = sm.add_constant(x)
@@ -102,6 +102,11 @@ print f.summary()
 # [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
 # [2] The condition number is large, 3.19e+05. This might indicate that there are strong multicollinearity or other numerical problems.
 
+
+# Create clean csv for logistic regression assignment
+print "[loansData_clean.csv] ==> Creating"
+loansData.to_csv('loansData_clean.csv', header = True, index = False)
+print "[loansData_clean.csv] ==> DONE!"
 
 
 
