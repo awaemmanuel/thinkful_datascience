@@ -78,12 +78,10 @@ monthly_income = loansData['Monthly.Income']
 y = np.matrix(interest_rate).transpose()
 
 
-# Independent Variables. Just for curiosity, I've added the Monthly Income to show a correlation
-# with interest rate as well. Our C.I is still 95% and our p-values are still 0, meaning it's very 
-# significant to consider the Monthly Income in our model
+# Independent Variables. 
 x1 = np.matrix(fico_scores).transpose()
 x2 = np.matrix(loan_amts).transpose()
-x3 = np.matrix(monthly_income).transpose()
+#x3 = np.matrix(monthly_income).transpose() # Adding monthly income causes collinearity, it's related to loan amts and doesn't let us see relationships clearly.
 
 
 # Stack the columns of independent variables to create input matrix
