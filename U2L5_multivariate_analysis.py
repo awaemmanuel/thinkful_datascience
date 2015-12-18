@@ -47,24 +47,14 @@ plt.xlabel('Interest Rate')
 plt.ylabel('Annual Income')
 plt.savefig('int_vs_income.png')
 
-# Analysis
-model = smf.ols(formula = 'int_rate ~ home_ownership', data = df).fit()
+# Create an interaction column of log income and homeownership
+df['income_and_ownership'] = [ x * y for x, y in zip(df['annual_inc'].tolist(), df['home_ownership'].tolist())]
 
-print "\nAnalysis of Model\n"
-print "Interest Rate modeled against Ownership. A very low R-square is seen\n"
-print model.summary()
+# Analysis - Stacking of columns seems buggy.
+y = np.array(df['int_rate'])
+x = df[['annual_inc', 'home_ownership', 'income_and_ownership']]
+X = x.as_matrix()
 
-# Analysis
-model = smf.ols(formula = 'int_rate ~ home_ownership * annual_inc', data = df).fit()
-
-print "\nAnalysis of Model\n"
-print "Interest Rate modeled against Ownership with a multiplicative interaction with annual income. An increase in R-square is observed as we add more explanatory variables\n"
-print model.summary()
-
-
-# Analysis - Categorize the homeownership
-model = smf.ols(formula = 'int_rate ~ C(home_ownership) * annual_inc', data = df).fit()
-
-print "\nAnalysis of Model with categorizing homeownship\n"
-print "Interest Rate modeled against Ownership with a multiplicative interaction with annual income. An increase in R-square is observed as we Categorize"
+print "USING SM.OLS ANALYSIS\n"
+model = sm.OLS(y, X).fit()
 print model.summary()
