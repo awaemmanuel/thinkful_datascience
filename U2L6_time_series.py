@@ -15,9 +15,11 @@ dfts = df.set_index('issue_d_format')
 year_month_summary = dfts.groupby(lambda x: x.year * 100 + x.month).count()
 loan_count_summary = year_month_summary['issue_d']
 
+#print len(loan_count_summary)
 # Plot the loan amount
 plt.figure(figsize = (10, 5))
 plt.plot(loan_count_summary)
+plt.xlim([0, 25 * (10 ** 5)])
 plt.savefig("raw_loan_cnt_summary.png")
 plt.clf()
 
