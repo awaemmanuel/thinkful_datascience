@@ -186,12 +186,9 @@ def get_available_bikes_from_db():
 # Find the key with the greatest value
 def keywithmaxval(d):
     return max(d, key=lambda k: d[k])
+
+def data_ingestion():
     
-if __name__ == '__main__':
-    
-    '''
-        DATA INGESTION AND ACQUISITION
-    '''
     # Create/Update database for one hour time window with 1 minute intervals.
     for idx in xrange(1, 61):
 
@@ -227,10 +224,8 @@ if __name__ == '__main__':
         # Spinning cursor to wait for 60 seconds.
         spinning_cursor(60)
         
-    '''
-        ANALYSIS PART
-    '''
-    df = get_available_bikes_from_db()
+def data_analysis():
+    df = get_available_bikes_from_db() # Execution time and columns of stations.
     
     hour_change = collections.defaultdict(int)
     for col in df.columns:
@@ -250,17 +245,27 @@ if __name__ == '__main__':
     con = connect_db()
     cur = con.cursor()
     
-    #query sqlite for reference information
-    cur.execute("SELECT id, stationname, latitude, longitude FROM citibike_reference WHERE id = ?", (max_station,))
-    data = cur.fetchone()
-    print("The most active station is station id %s at %s latitude: %s longitude: %s " % data)
-    print("With %d bicycles coming and going in the hour between %s and %s" % (
-    hour_change[max_station],
-    datetime.datetime.fromtimestamp(int(df.index[0])).strftime('%Y-%m-%dT%H:%M:%S'),
-    datetime.datetime.fromtimestamp(int(df.index[-1])).strftime('%Y-%m-%dT%H:%M:%S'),
-))
+    with con:
+        #query sqlite for reference information
+        cur.execute("SELECT id, stationname, latitude, longitude FROM citibike_reference WHERE id = ?", (max_station,))
+        data = cur.fetchone()
+        print("The most active station is station id %s at %s latitude: %s longitude: %s " % data)
+        print("With %d bicycles coming and going in the hour between %s and %s" % (
+        hour_change[max_station],
+        datetime.datetime.fromtimestamp(int(df.index[0])).strftime('%Y-%m-%d T%H:%M:%S'),
+        datetime.datetime.fromtimestamp(int(df.index[-1])).strftime('%Y-%m-%d T%H:%M:%S'),
+    ))
     
     # Plot Data
     plt.bar(hour_change.keys(), hour_change.values())
-    plt.savefig('hour_change.png')
+    plt.savefig('figures/citibike/hour_change.png')
     plt.clf()
+    
+if __name__ == '__main__':
+    
+    # DATA INGESTION AND ACQUISITION PART 
+    data_ingestion()
+        
+    # ANALYSIS PART 
+    data_analysis()
+    
