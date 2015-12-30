@@ -7,6 +7,7 @@ import pandas as pd
 import time
 from pandas.io.json import json_normalize
 from dateutil.parser import parse # parse string into Python datetime object
+import datetime
 import sys
 
 from helper_modules import spinning_cursor
@@ -162,8 +163,22 @@ def insert_update_available_bike_table(exec_time, station_bean_list):
             cur.execute('UPDATE available_bikes SET _' + str(key) + '=' + str(value) + ' WHERE execution_time = ' + process_exec_time(exec_time) + ';')
 
             
-if __name__ == '__main__':
-            
+# Analysis
+def get_available_bikes_from_db():
+    # Connect to the database
+    con = connect_db()
+    cur = con.cursor()
+    
+    with con:
+        df = pd.read_sql_query('SELECT * FROM available_bikes ORDER BY execution_time', con, index_col = 'execution_time')
+        
+    return df
+# Find the key with the greatest value
+def keywithmaxval(d):
+    return max(d, key=lambda k: d[k])
+
+def data_ingestion():
+    
     # Create/Update database for one hour time window with 1 minute intervals.
     for idx in xrange(1, 61):
 
@@ -198,3 +213,49 @@ if __name__ == '__main__':
         
         # Spinning cursor to wait for 60 seconds.
         spinning_cursor.spinning_cursor(60)
+        
+def data_analysis():
+    df = get_available_bikes_from_db() # Execution time and columns of stations.
+    
+    hour_change = collections.defaultdict(int)
+    for col in df.columns:
+        station_vals = df[col].tolist()
+        station_id = col[1:] #trim the "_"
+        station_change = 0
+        for k,v in enumerate(station_vals):
+            if k < len(station_vals) - 1:
+                station_change += abs(station_vals[k] - station_vals[k+1])
+        hour_change[int(station_id)] = station_change #convert the station id back to integer
+        
+    # assign the max key to max_station
+    max_station = keywithmaxval(hour_change)
+
+    
+    # Connect to the database
+    con = connect_db()
+    cur = con.cursor()
+    
+    with con:
+        #query sqlite for reference information
+        cur.execute("SELECT id, stationname, latitude, longitude FROM citibike_reference WHERE id = ?", (max_station,))
+        data = cur.fetchone()
+        print("The most active station is station id %s at %s latitude: %s longitude: %s " % data)
+        print("With %d bicycles coming and going in the hour between %s and %s" % (
+        hour_change[max_station],
+        datetime.datetime.fromtimestamp(int(df.index[0])).strftime('%Y-%m-%d T%H:%M:%S'),
+        datetime.datetime.fromtimestamp(int(df.index[-1])).strftime('%Y-%m-%d T%H:%M:%S'),
+    ))
+    
+    # Plot Data
+    plt.bar(hour_change.keys(), hour_change.values())
+    plt.savefig('figures/citibike/hour_change.png')
+    plt.clf()
+    
+if __name__ == '__main__':
+    
+    # DATA INGESTION AND ACQUISITION PART 
+    data_ingestion()
+        
+    # ANALYSIS PART 
+    data_analysis()
+    
