@@ -7,8 +7,9 @@ import pandas as pd
 import time
 from pandas.io.json import json_normalize
 from dateutil.parser import parse # parse string into Python datetime object
-import itertools
 import sys
+
+from helper_modules import spinning_cursor
 
 
 ####### HELPER FUNCTIONS ###########
@@ -62,17 +63,6 @@ def connect_db():
     # Connect to the database
     return lite.connect('citi_bike.db')
     
-
-'''
-    Terminal spinning cursor simulator
-'''
-def spinning_cursor(time_to_wait):
-    spinner = itertools.cycle(['-', '/', '|', '\\'])
-    for _ in range(time_to_wait):
-        sys.stdout.write(spinner.next())
-        sys.stdout.flush()
-        time.sleep(1)
-        sys.stdout.write('\b')
 
 ######### MAIN FUNCTIONS #################
 
@@ -207,4 +197,4 @@ if __name__ == '__main__':
 
         
         # Spinning cursor to wait for 60 seconds.
-        spinning_cursor(60)
+        spinning_cursor.spinning_cursor(60)
