@@ -18,8 +18,13 @@ from helper_modules import spinning_cursor, utility_functions as uf
 
 # Weather api key
 api_key = '0c418987d4da9f81100361e0141d5af6'
+url = 'https://api.forecast.io/forecast'
 
 ################### UTILITY FUNCTIONS ##########################
+# Params ==> 'long,lat,time'
+def download_weather_data(url, query_params, api_key='0c418987d4da9f81100361e0141d5af6'): 
+    return rq.get('{}/{}/{}'.format(url, api_key, query_params))
+
 # Connect to DB
 def connect_db():
     # Connect to the database
@@ -50,8 +55,6 @@ def sync_daily_time_to_utc(req):
     local_dt = local_time.localize(time_obj, is_dst=None)
     utc_dt = local_dt.astimezone(pytz.utc)
     return datetime.datetime.strptime(utc_dt.strftime('%Y-%m-%d'), "%Y-%m-%d").strftime('%s')
-    print utc_dt
-    return utc_dt.strftime('%s')
 
 
 # Get the daily weather data
@@ -108,47 +111,45 @@ def create_tables():
 def insert_max_temp_to_db():
     con = connect_db()
     cur = con.cursor()
+    global url
     
     CONST = _Const()
     cityname_and_location = CONST.CITIES_AND_LOCATION
     
-    start_date = datetime.datetime.now() - datetime.timedelta(days = 30)
     end_date = datetime.datetime.now()
-    
+    start_date = end_date - datetime.timedelta(days = 30)
     
     # Update table with daily max temperatures
-    for idx in xrange(1): # 30 Days starting from day 0
+    for idx in xrange(31): # 30 Days starting from day 0
         for city_idx, key in enumerate(cityname_and_location):
             # Get longitude and latitude ==> key is the city name
             long_lat = cityname_and_location[key]
             query_params = long_lat + ',' + (start_date + datetime.timedelta(days = idx)).strftime('%Y-%m-%dT%H:%M:%S')
 
             # Download data
-            req = download_weather_data(query_params)
+            req = download_weather_data(url, query_params)
 
             # Process data
             exec_time, temp = get_daily_time_and_maxtemp(req)
 
-            print "Day: {}\n    PROCESSING ==> {} with max temperature {}".format(idx, key, temp)
+            print "Day: {}  PROCESSING ==> {}. Max temperature {}".format(idx, key, temp)
 
             with con:
                 # Insert exec_time for the run only, for each row.
                 if city_idx == 0:
                     cur.execute('INSERT INTO cities_max_temperature (date) VALUES (?)', (exec_time,) )
-                
-                print ('UPDATE cities_max_temperature SET {} = {} WHERE date = {} ;'.format(key, temp, exec_time))
+                    
                 # Update DB
                 cur.execute('UPDATE cities_max_temperature SET {} = {} WHERE date = {} ;'.format(key, temp, exec_time))
-
-
-# Params ==> 'long,lat,time'
-def download_weather_data(query_params, api_key='0c418987d4da9f81100361e0141d5af6'): 
-    return rq.get('{}/{}/{}'.format('https://api.forecast.io/forecast', api_key, query_params))
+        
+        # Demarcation.
+        print "=" * 80
 
                   
 if __name__ == "__main__":
     create_tables()
     
     insert_max_temp_to_db()
-                  
+   
+# Sample api call
 # https://api.forecast.io/forecast/0c418987d4da9f81100361e0141d5af6/42.331960,-71.020173,2015-12-30T09:40:02
