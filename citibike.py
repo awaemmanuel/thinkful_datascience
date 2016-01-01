@@ -170,9 +170,9 @@ def get_available_bikes_from_db():
     cur = con.cursor()
     
     with con:
-        df = pd.read_sql_query('SELECT * FROM available_bikes ORDER BY execution_time', con, index_col = 'execution_time')
-        
+        df = pd.read_sql_query('SELECT * FROM available_bikes ORDER BY execution_time', con, index_col = 'execution_time')   
     return df
+
 # Find the key with the greatest value
 def keywithmaxval(d):
     return max(d, key=lambda k: d[k])
