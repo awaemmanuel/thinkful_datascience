@@ -185,6 +185,7 @@ def data_analysis():
                 temp_change += abs(city_vals[k] - city_vals[k+1])
         daily_change[city_name] = temp_change 
         
+        print "WORKING ON: ", col
         print "MEAN: ", df[col].mean()
         print "MODE: ", stats.mode(df[col]).mode[0]
         print "VARIANCE: ", df[col].var()
