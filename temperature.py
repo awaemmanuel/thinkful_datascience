@@ -210,7 +210,7 @@ def data_ingestion():
     
                   
 if __name__ == "__main__":
-    #data_ingestion()
+    data_ingestion()
     
     data_analysis()
    
