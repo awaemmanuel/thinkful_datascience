@@ -7,9 +7,10 @@ import pandas as pd
 import time
 from pandas.io.json import json_normalize
 from dateutil.parser import parse # parse string into Python datetime object
-import itertools
 import datetime
 import sys
+
+from helper_modules import spinning_cursor
 
 
 ####### HELPER FUNCTIONS ###########
@@ -63,17 +64,6 @@ def connect_db():
     # Connect to the database
     return lite.connect('citi_bike.db')
     
-
-'''
-    Terminal spinning cursor simulator
-'''
-def spinning_cursor(time_to_wait):
-    spinner = itertools.cycle(['-', '/', '|', '\\'])
-    for _ in range(time_to_wait):
-        sys.stdout.write(spinner.next())
-        sys.stdout.flush()
-        time.sleep(1)
-        sys.stdout.write('\b')
 
 ######### MAIN FUNCTIONS #################
 
@@ -180,9 +170,9 @@ def get_available_bikes_from_db():
     cur = con.cursor()
     
     with con:
-        df = pd.read_sql_query('SELECT * FROM available_bikes ORDER BY execution_time', con, index_col = 'execution_time')
-        
+        df = pd.read_sql_query('SELECT * FROM available_bikes ORDER BY execution_time', con, index_col = 'execution_time')   
     return df
+
 # Find the key with the greatest value
 def keywithmaxval(d):
     return max(d, key=lambda k: d[k])
@@ -222,7 +212,7 @@ def data_ingestion():
 
         
         # Spinning cursor to wait for 60 seconds.
-        spinning_cursor(60)
+        spinning_cursor.spinning_cursor(60)
         
 def data_analysis():
     df = get_available_bikes_from_db() # Execution time and columns of stations.
