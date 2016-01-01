@@ -4,6 +4,7 @@ import collections
 import matplotlib.pyplot as plt
 import requests as rq
 import pandas as pd
+from scipy import stats
 import time
 from pandas.io.json import json_normalize
 from dateutil.parser import parse # parse string into Python datetime object
@@ -145,11 +146,73 @@ def insert_max_temp_to_db():
         # Demarcation.
         print "=" * 80
 
+# Plot and save histogram of a column
+def plot_and_save_hist(df, column_name, output_dir, fig_name, output_format, fig_no = 0):
+    path_to_fig = str(output_dir) + '/' + str(fig_name)
+    print "     ==> Saving {}_{}.{} for run: {}".format(path_to_fig, fig_no, output_format, fig_no)
+    plt.figure()
+    df[column_name].hist()
+    plt.savefig("{}_{}.{}".format(path_to_fig, fig_no, output_format))
+    plt.clf()
+    
+
+# Analysis
+def get_maxtemps_from_db():
+    # Connect to the database
+    con = connect_db()
+    cur = con.cursor()
+    
+    with con:
+        df = pd.read_sql_query('SELECT * FROM cities_max_temperature ORDER BY date', con, index_col = 'date')   
+    return df
+
+
+# DATA ANALYSIS
+def data_analysis():
+    df = get_maxtemps_from_db()
+    daily_change = collections.defaultdict(str)
+    
+    # Connect to the database
+    con = connect_db()
+    cur = con.cursor()
+    
+    for col in df.columns:    
+        city_vals = df[col].tolist()
+        city_name = col
+        temp_change = 0
+        for k,v in enumerate(city_vals):
+            if k < len(city_vals) - 1:
+                temp_change += abs(city_vals[k] - city_vals[k+1])
+        daily_change[city_name] = temp_change 
+        
+        print "MEAN: ", df[col].mean()
+        print "MODE: ", stats.mode(df[col]).mode[0]
+        print "VARIANCE: ", df[col].var()
+        print "RANGE: ", max(df[col]) - min(df[col])
+        plot_and_save_hist(df, col, 'figures/weather', '{}_histplot'.format(col), 'png')
+        
+    # city with max change in temperature
+    city_max_temp = uf.keywithmaxval(daily_change)
+    
+    print "City with max temp", city_max_temp
+    
+    print("The city with the most changes in temperature is: {} with max temperature of {}".format(city_max_temp, df[city_max_temp].max()))
+
+
+# DATA INGESTION
+def data_ingestion():
+    try:
+        create_tables()
+        insert_max_temp_to_db()
+    except Exception:
+        raise Exception('Something went wrong with Database connection.')
+        
+    
                   
 if __name__ == "__main__":
-    create_tables()
+    data_ingestion()
     
-    insert_max_temp_to_db()
+    data_analysis()
    
 # Sample api call
 # https://api.forecast.io/forecast/0c418987d4da9f81100361e0141d5af6/42.331960,-71.020173,2015-12-30T09:40:02

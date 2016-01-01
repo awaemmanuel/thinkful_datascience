@@ -7,3 +7,8 @@ def constant(f):
     def fget(self):
         return f()
     return property(fget, fset)
+
+
+# Find the key with the greatest value
+def keywithmaxval(d):
+    return max(d, key = lambda k: d[k])
