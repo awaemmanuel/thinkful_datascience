@@ -14,7 +14,7 @@ import sys
 import csv
 
 
-from helper_modules import utility_functions as uf
+from helper_modules import utility_functions as uf, spinning_cursor as sc
 
 # Create table for education data
 def create_table_education():
@@ -103,7 +103,6 @@ def bulk_insert_into_db_gdb(min_year, max_year):
     cur = con.cursor()
     
     with open('world_bank_gdp_data/9612cab5-6177-41d5-a04f-55d22c4169b7_v2.csv') as inputFile:
-        print "World bank bulk insert"
         # skip the first four irrelevant lines
         next(inputFile) 
         next(inputFile)
@@ -127,6 +126,8 @@ def bulk_insert_into_db_gdb(min_year, max_year):
                     
 # Ingest the UN Data and produce a DataFrame, after inserting into database.
 def data_ingestion_education_info():
+    print "[Ingesting Education data] ==> Begin"
+    
     create_table_education()
     req = download_data_education()
     soup = get_beautiful_soup_data(req)
@@ -134,15 +135,20 @@ def data_ingestion_education_info():
     df = build_dataframe_education(clean_data)
     bulk_insert_into_db_education(df)
     
+    print "[Ingesting Education data] ==> End"
+    
     # Tuple of data needed to correlate with gdp information
     return (df, df.Year.min(), df.Year.max())
     
 
 # Ingest the world bank GDP information, specifying what year range to analyze
 def data_ingestion_worldbank_gdp_info(min_year, max_year):
-    print "World bank part"
+    print "[Ingesting World bank GDP data] ==> Begin"
+    
     create_table_gdp()
     bulk_insert_into_db_gdb(min_year, max_year)
+    
+    print "[Ingesting World bank GDP data] ==> End"
     
     
 # Build DataFrame - world bankd gdp
@@ -163,6 +169,7 @@ def build_dataframe_gdp():
     
     # Analysis and Correlation education data with gdp
 def data_analysis_and_correlation(df_education, df_gdp):
+    print "[Data Analysis and Correlation of Education to GDP data] ==> Begin"
     
     # Find set of common countries
     set_edu = set(df_education['Country'].tolist())
@@ -184,19 +191,43 @@ def data_analysis_and_correlation(df_education, df_gdp):
             Women_School_Time.append(int(df1['Women_School_Time'].iloc[0]))
             gdp.append(np.log(df2['GDP_'+ df1['Year'].iloc[0]].iloc[0]))
 
-    df_final = pd.DataFrame({'Total': Total_School_Time, 'Men': Men_School_Time, 'Women': Women_School_Time, 'GDP': gdp})    
+    df_edu_to_gdp = pd.DataFrame({'Total': Total_School_Time, 'Men': Men_School_Time, 'Women': Women_School_Time, 'GDP': gdp})    
 
-    print df_final.corr()
+    # Print Correlation Matrix
+    print df_edu_to_gdp.corr()
     
+    # Scatter matrix plot with histogram of data plots in the diagonal
+    pd.scatter_matrix(df_edu_to_gdp, alpha=0.05, figsize=(10,10), diagonal='hist')
+    plt.savefig('figures/education_to_gdp/data_education_gdp_analysis.png')
+    plt.clf()
 
+    
+    '''
+         ==> Conclusion / Summary
+                    GDP       Men     Total     Women
+        GDP    1.000000  0.495794  0.479050  0.497923
+        Men    0.495794  1.000000  0.971663  0.942572
+        Total  0.479050  0.971663  1.000000  0.977217
+        Women  0.497923  0.942572  0.977217  1.000000
+    '''
+    
+    print "FINAL ANALYSIS: \nWe observe a weak correlation between education attainment and GDP. The correlation coefficients are closer to 0 than 1. This shows there is a greater scatter of the data points from the fitted line. At this point we cannot not conclude any direct relationship."
+    
+    print "[Data Analysis and Correlation of Education to GDP data] ==> End"
+
+############# RUN MAIN ##########################
 if __name__ == '__main__':
     df_education, min_year, max_year = data_ingestion_education_info()
+    sc.spinning_cursor(3)
     
     data_ingestion_worldbank_gdp_info(min_year, max_year)
+    sc.spinning_cursor(3)
     
     df_gdp = build_dataframe_gdp()
+    sc.spinning_cursor(3)
     
     data_analysis_and_correlation(df_education, df_gdp)
+    sc.spinning_cursor(3)
     
 
 
