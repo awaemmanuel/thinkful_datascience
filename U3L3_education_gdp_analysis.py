@@ -2,10 +2,10 @@
     Analysis of Educational Attainment with GDP
 '''
 import csv
+import math # pylint fails to find numpy
 import matplotlib.pyplot as plt
 import requests as rq
 import pandas as pd
-import numpy as np
 from bs4 import BeautifulSoup
 from helper_modules import utility_functions as uf, spinning_cursor as sc
 
@@ -88,7 +88,7 @@ def bulk_insert_into_db_gdb(num_min_year, num_max_year):
     """ Insert data into gdp database """
     con = uf.connect_db('scrappd_education_data.db')
     cur = con.cursor()  
-    with open('world_bank_gdp_data/9612cab5-6177-41d5-a04f-55d22c4169b7_v2.csv', 'rU') as input_file:
+    with open('world_bank_gdp_data/9612cab5-6177-41d5-a04f-55d22c4169b7_v2.csv', 'r') as input_file:
         # skip the first four irrelevant lines
         next(input_file) 
         next(input_file)
@@ -163,7 +163,7 @@ def data_analysis_and_correlation(df_education, df_gdp):
             total_school_time.append(int(df1['Total_School_Time'].iloc[0]))
             men_school_time.append(int(df1['Men_School_Time'].iloc[0]))
             women_school_time.append(int(df1['Women_School_Time'].iloc[0]))
-            gdp.append(np.log10(df2['GDP_'+ df1['Year'].iloc[0]].iloc[0]))
+            gdp.append(math.log(df2['GDP_'+ df1['Year'].iloc[0]].iloc[0]))
     df_edu_to_gdp = pd.DataFrame({'Total': total_school_time, 'Men': men_school_time, \
                                   'Women': women_school_time, 'GDP': gdp})    
     
@@ -174,14 +174,14 @@ def data_analysis_and_correlation(df_education, df_gdp):
     plt.savefig('figures/education_to_gdp/data_education_gdp_analysis.png')
     plt.clf()
 
-    """    
-         ==> Conclusion / Summary
-                    GDP       Men     Total     Women
-        GDP    1.000000  0.495794  0.479050  0.497923
-        Men    0.495794  1.000000  0.971663  0.942572
-        Total  0.479050  0.971663  1.000000  0.977217
-        Women  0.497923  0.942572  0.977217  1.000000
-    """
+#     
+#         ==> Conclusion / Summary
+#                    GDP       Men     Total     Women
+#        GDP    1.000000  0.495794  0.479050  0.497923
+#        Men    0.495794  1.000000  0.971663  0.942572
+#        Total  0.479050  0.971663  1.000000  0.977217
+#        Women  0.497923  0.942572  0.977217  1.000000
+#    
     
     print """
 FINAL ANALYSIS: 
