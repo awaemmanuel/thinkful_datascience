@@ -6,6 +6,8 @@ import math # pylint fails to find numpy
 import matplotlib.pyplot as plt
 import requests as rq
 import pandas as pd
+import numpy as np
+from scipy.stats import pearsonr as sp
 from bs4 import BeautifulSoup
 from helper_modules import utility_functions as uf, spinning_cursor as sc
 
@@ -94,7 +96,6 @@ def bulk_insert_into_db_gdb(num_min_year, num_max_year):
         next(input_file)
         next(input_file)
         next(input_file)
-        
         # Get csv header and parse information to return relevant column names to the db
         header = next(input_file)
         col_indexes = get_csv_column_idx(header, num_min_year, num_max_year)
@@ -115,28 +116,24 @@ def bulk_insert_into_db_gdb(num_min_year, num_max_year):
                     
 def data_ingestion_education_info():
     """ Ingest the UN Data and produce a DataFrame, after inserting into database. """
-    print("[Ingesting Education data] ==> Begin")
-    
+    print "[Ingesting Education data] ==> Begin"
     create_table_education()
     req = download_data_education()
     soup = get_beautiful_soup_data(req)
     clean_data = get_cleaned_data_from_table(soup)
     df_edu_data = build_dataframe_education(clean_data)
     bulk_insert_into_db_education(df_edu_data)
-    
-    print("[Ingesting Education data] ==> End")
+    print "[Ingesting Education data] ==> End"
     
     # Tuple of data needed to correlate with gdp information
     return (df_edu_data, df_edu_data.Year.min(), df_edu_data.Year.max())
 
 def dataingestion_worldbankgdp_info(num_min_year, num_max_year):
     """ Ingest the world bank GDP information, specifying what year range to analyze. """
-    print("[Ingesting World bank GDP data] ==> Begin")
-    
+    print "[Ingesting World bank GDP data] ==> Begin"
     create_table_gdp()
     bulk_insert_into_db_gdb(num_min_year, num_max_year)
-    
-    print("[Ingesting World bank GDP data] ==> End")
+    print "[Ingesting World bank GDP data] ==> End"
     
 def build_dataframe_gdp():
     """ Build DataFrame - world bankd gdp. """
@@ -148,15 +145,13 @@ def build_dataframe_gdp():
 
 def data_analysis_and_correlation(df_education, df_gdp):
     """ Analysis and Correlation education data with gdp. """
-    print("[Data Analysis and Correlation of Education to GDP data] ==> Begin")
-    set_edu = set(df_education['Country'].tolist())
-    set_gdp = set(df_gdp['Country'].tolist())
-    list_common_countries = list(set_edu & set_gdp)
+    print "[Data Analysis and Correlation of Education to GDP data] ==> Begin"
+    common_countries = list(set(df_education['Country'].tolist()) & set(df_gdp['Country'].tolist()))
     gdp = []
     total_school_time = []
     men_school_time = []
     women_school_time = []
-    for cntry in list_common_countries:
+    for cntry in common_countries:
         df1 = df_education[df_education['Country'] == cntry]
         df2 = df_gdp[df_gdp['Country'] == cntry]
         if df2['GDP_'+ df1['Year'].iloc[0]].iloc[0] != '':
@@ -166,14 +161,19 @@ def data_analysis_and_correlation(df_education, df_gdp):
             gdp.append(math.log(df2['GDP_'+ df1['Year'].iloc[0]].iloc[0]))
     df_edu_to_gdp = pd.DataFrame({'Total': total_school_time, 'Men': men_school_time, \
                                   'Women': women_school_time, 'GDP': gdp})    
+    print df_edu_to_gdp.corr(), "\n"
     
-    print(df_edu_to_gdp.corr())
-    
+    gdp_np_array = np.array(df_edu_to_gdp.GDP.tolist())
+    for col in ['Women', 'Men', 'Total']:
+        r_val, p_val = sp(gdp_np_array, np.array(df_edu_to_gdp[col].tolist()))
+        print "Correlation of GDP against {}:".format(col)
+        print "Pearsons correlation coefficient: {}".format(r_val)
+        print "2-tailed p-values: {}\n".format(p_val)
+        
     # Scatter matrix plot with histogram of data plots in the diagonal
     pd.scatter_matrix(df_edu_to_gdp, alpha=0.05, figsize=(10, 10), diagonal='hist')
     plt.savefig('figures/education_to_gdp/data_education_gdp_analysis.png')
     plt.clf()
-
 #     
 #         ==> Conclusion / Summary
 #                    GDP       Men     Total     Women
@@ -181,9 +181,8 @@ def data_analysis_and_correlation(df_education, df_gdp):
 #        Men    0.495794  1.000000  0.971663  0.942572
 #        Total  0.479050  0.971663  1.000000  0.977217
 #        Women  0.497923  0.942572  0.977217  1.000000
-#    
-    
-    print("""
+#       
+    print """
 FINAL ANALYSIS: 
     We observe a weak correlation between education attainment and GDP.
     The correlation coefficients are closer to 0 than 1.
@@ -191,8 +190,7 @@ FINAL ANALYSIS:
     At this point we cannot not conclude any direct relationship.
     
 [Data Analysis and Correlation of Education to GDP data] ==> End
-    """) 
-    
+    """  
 ############# RUN MAIN ##########################
 if __name__ == '__main__':
     df_education_result, min_year, max_year = data_ingestion_education_info()
@@ -206,7 +204,5 @@ if __name__ == '__main__':
     
     data_analysis_and_correlation(df_education_result, df_gdp_result)
     sc.spinning_cursor(3)
-    
-
 
 
