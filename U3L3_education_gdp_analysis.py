@@ -115,7 +115,7 @@ def bulk_insert_into_db_gdb(num_min_year, num_max_year):
                     
 def data_ingestion_education_info():
     """ Ingest the UN Data and produce a DataFrame, after inserting into database. """
-    print "[Ingesting Education data] ==> Begin"
+    print("[Ingesting Education data] ==> Begin")
     
     create_table_education()
     req = download_data_education()
@@ -124,19 +124,19 @@ def data_ingestion_education_info():
     df_edu_data = build_dataframe_education(clean_data)
     bulk_insert_into_db_education(df_edu_data)
     
-    print "[Ingesting Education data] ==> End"
+    print("[Ingesting Education data] ==> End")
     
     # Tuple of data needed to correlate with gdp information
     return (df_edu_data, df_edu_data.Year.min(), df_edu_data.Year.max())
 
 def dataingestion_worldbankgdp_info(num_min_year, num_max_year):
     """ Ingest the world bank GDP information, specifying what year range to analyze. """
-    print "[Ingesting World bank GDP data] ==> Begin"
+    print("[Ingesting World bank GDP data] ==> Begin")
     
     create_table_gdp()
     bulk_insert_into_db_gdb(num_min_year, num_max_year)
     
-    print "[Ingesting World bank GDP data] ==> End"
+    print("[Ingesting World bank GDP data] ==> End")
     
 def build_dataframe_gdp():
     """ Build DataFrame - world bankd gdp. """
@@ -148,7 +148,7 @@ def build_dataframe_gdp():
 
 def data_analysis_and_correlation(df_education, df_gdp):
     """ Analysis and Correlation education data with gdp. """
-    print "[Data Analysis and Correlation of Education to GDP data] ==> Begin"
+    print("[Data Analysis and Correlation of Education to GDP data] ==> Begin")
     set_edu = set(df_education['Country'].tolist())
     set_gdp = set(df_gdp['Country'].tolist())
     list_common_countries = list(set_edu & set_gdp)
@@ -167,7 +167,7 @@ def data_analysis_and_correlation(df_education, df_gdp):
     df_edu_to_gdp = pd.DataFrame({'Total': total_school_time, 'Men': men_school_time, \
                                   'Women': women_school_time, 'GDP': gdp})    
     
-    print df_edu_to_gdp.corr()
+    print(df_edu_to_gdp.corr())
     
     # Scatter matrix plot with histogram of data plots in the diagonal
     pd.scatter_matrix(df_edu_to_gdp, alpha=0.05, figsize=(10, 10), diagonal='hist')
@@ -183,7 +183,7 @@ def data_analysis_and_correlation(df_education, df_gdp):
 #        Women  0.497923  0.942572  0.977217  1.000000
 #    
     
-    print """
+    print("""
 FINAL ANALYSIS: 
     We observe a weak correlation between education attainment and GDP.
     The correlation coefficients are closer to 0 than 1.
@@ -191,7 +191,7 @@ FINAL ANALYSIS:
     At this point we cannot not conclude any direct relationship.
     
 [Data Analysis and Correlation of Education to GDP data] ==> End
-    """ 
+    """) 
     
 ############# RUN MAIN ##########################
 if __name__ == '__main__':
